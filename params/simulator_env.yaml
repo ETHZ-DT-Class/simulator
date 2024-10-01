@@ -1,0 +1,67 @@
+seed: 0 # seed for random number generation; 0 means random seed
+map_name: loop_empty # duckietown map name
+max_steps: inf # maximum number of steps before reset
+domain_rand: false # domain randomization
+accept_start_angle_deg: 10 # max angle difference between start agent direction and lane direction in degrees
+full_transparency: true # RL only, return the full state of the simulator
+distortion: false # enable camera distortion
+additional_keyboard_control: true # additional keyboard control together with published command topic (keyboard control has precedence) - currently not supported
+duckiebot_color: blue # [blue | red] - duckiebot color for top_down rendering and Rviz mesh
+
+init_pose: # initial agent pose
+  enable: false # use the specified initial pose, otherwise use the pose provided by the map config
+  x: 0.0 # agent initial x position in meters
+  y: 0.0 # agent initial y position in meters
+  theta: 0.0 # agent initial orientation in radians
+
+motion_model:
+  type: dynamics # [dynamics | kinematics] - dynamics is more realistic, kinematics has immediate reaction
+  params:
+    delay: 0.0 # delay in seconds in the agent's actions
+    wheel_distance: 0.102 # distance between the two wheels in meters - original should be 0.102
+    wheel_radius_left: 0.0335 # radius of the left wheel in meters - original should be 0.0335
+    wheel_radius_right: 0.0335 # radius of the right wheel in meters - original should be 0.0335
+  applied_command_noise: # add noise before applying the command to the agent
+    enable: true
+    min_action_threshold: 0.1 # no noise if abs(action) < threshold
+    white_noise:
+      sigma: 0.1
+    bias:
+      mu: 0.0
+      sigma: 0.0
+
+update: # choose your preferred update method and specify its value
+  use: frame_rate # [frame_rate | delta_time_step] - update the physics using the specified frame rate or delta time step
+  frame_rate: 30 # inner frame rate of the physics update in Hz, i.e. sim delta time step is 1/frame_rate seconds
+  delta_time_step: 0.03333333 # inner delta time step of the physics update in seconds, i.e. frame rate is 1/delta_time_step Hz
+
+rendering:
+  frustum_filtering: true # activate frustum culling
+  frustum_filtering_min_arccos_threshold: 0.3 # min arccos threhsold for the frustum filtering
+  depth_filtering_factor: 5.0 # filter objects far away from the agent (depth > depth_filtering_factor * tile_size)
+  depth_texture_resize_factor: 3.0 # resize the texture for objects far away from the agent (depth > depth_filtering_factor * tile_size)
+  distant_texture_resize_factor: 0.25 # texture resize factor (multiple of 2 or divisor of 1/2)
+  force_texture_resize_floor: true # force the floor texture to be resized always
+  texture_style: photos # [photos | photos-segmentation | segmentation | smooth | synthetic]
+  skip_frame_buffer_copy: true # skip the frame buffer copy (faster on CPU, should not create problems apart from small 3D objects artifacts due to no depth buffer)
+
+compute_reward: false # compute RL reward
+
+check: # reset the simulation if the checks are not satisfied
+  drivable: true # check if the agent is on a drivable surface, otherwise reset
+  collisions: true # check if the agent has collided, otherwise reset
+
+display: # external displaying of the simulation
+  screen_enable: true # display the external simulation rendering on screen - currently not supported
+  topic_enable: true # publish the external simulation rendering on a topic
+  mode: human # [human | top_down | free_camera]
+  width: 640 # screen width
+  height: 480 # screen height
+  rate: 10 # update rate
+  reuse_camera_obs_if_possible: true # reuse the camera observation if available and same scale, and mode is not top_down
+  enable_segmentation: false # render as segmented image
+  show: # display the following information on top of screen
+    pose: true # display the agent's pose
+    speed: true # display the agent's speed
+    steps: false # display n. simulation steps
+    time_stamp: true # display simulation time stamp

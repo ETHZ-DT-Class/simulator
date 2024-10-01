@@ -1,0 +1,16 @@
+sub: # Subscribed topics
+  wheel_cmd: /wheels_driver_node/wheels_cmd
+
+pub: # Published topics
+  camera: /camera_node/image/compressed
+  imu: /imu_node/imu
+  wheel_encoder_left: /left_wheel_encoder_node/tick
+  wheel_encoder_right: /right_wheel_encoder_node/tick
+  gt_pose: /gt_pose_node/pose
+  lane_pose: /gt_lane_pose_node/lane_pose
+  simulation_external_window: /simulation_external_window/compressed
+  command: /record_control_node/wheels_cmd
+
+srv: # Services (server)
+  reset_sim: /reset_simulation
+  kill_sim: /kill_simulation

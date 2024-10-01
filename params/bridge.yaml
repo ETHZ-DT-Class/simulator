@@ -1,0 +1,13 @@
+realtime_factor: 1.0 # speed up the simulation by the factor (2.0 sim is updated 2x faster than real time, but 2x computational load)
+repeat_action_until_new: true # held the action until a new action is received, otherwise stop the robot until new action
+
+reset: # reset options
+  mode: reset # [reset | kill] - reset the simulation or kill the node when the reset is called
+  reset_ros_time_when_env_is_reset: true # the ros time is reset when the environment is being reset, i.e. topics' stamp will reset to 0
+  reset_action_when_env_is_reset: true # the action is reset when the environment is being reset, i.e. the robot will start still
+
+print_startup_log: true # print the startup log of the simulation
+
+meshes_folder_path: "/code/catkin_ws/src/user_code/simulator/meshes" # path for RViz to search for the meshes
+
+post_startup_log_text: "<warning>Using DEAFULT simulation parameters... YOU SHOULD USE THE SPECIFIC ONES FOR YOUR EXERCISE! Check the README of the exercise for more information." # print a special string of your choice, can be useful to understand which parameter folder is being used

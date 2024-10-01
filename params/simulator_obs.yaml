@@ -1,0 +1,70 @@
+camera:
+  enable: true
+  rate: 10
+  width: 640
+  height: 480
+  
+imu:
+  enable: true
+  rate: 30
+
+wheel_encoders:
+  enable: true
+  rate: 25
+  ticks_per_revolution: 32
+
+gt_pose:
+  enable: true
+  rate: 30
+
+lane_pose:
+  enable: true
+  rate: 30
+
+command:
+  enable: true
+  rate: 30
+
+
+noise: # add noise n_t to the data, obtained from white noise wn and bias b: n_t = b_mu,t + N(0, wn_sigma), with b_mu,t = b_mu,t-1 + N(0, b_sigma)
+
+  imu:
+    enable: true
+
+    lin_acc: # noise of the x and y axis linear acceleration
+      white_noise:
+        sigma: 0.05
+      bias:
+        mu: 0.01
+        sigma: 0.0
+
+    ang_vel: # noise of the z axis angular velocity
+      white_noise:
+        sigma: 0.05
+      bias:
+        mu: 0.01
+        sigma: 0.0
+
+    orientation: # noise of the z axis orientation
+      white_noise:
+        sigma: 0.05
+      bias:
+        mu: 0.02
+        sigma: 0.0
+
+  wheel_encoders: # the noise is directly applied to wheel rotation radians, NOT to encoder ticks
+    enable: true
+
+    left:
+      white_noise:
+        sigma: 0.1
+      bias:
+        mu: 0.01
+        sigma: 0.0005
+
+    right:
+      white_noise:
+        sigma: 0.1
+      bias:
+        mu: 0.01
+        sigma: 0.0005

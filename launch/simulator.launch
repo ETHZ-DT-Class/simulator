@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+    <arg name="use_sim_time" default="false"/>
+    <param name="use_sim_time" value="$(arg use_sim_time)"/>
+
+    <arg name="package_param_path" default="$(find simulator)/params"/>
+    <arg name="topics_param_file_name" default="$(arg package_param_path)/topics.yaml"/>
+    <arg name="simulator_env_param_file_name" default="$(arg package_param_path)/simulator_env.yaml"/>
+    <arg name="simulator_obs_param_file_name" default="$(arg package_param_path)/simulator_obs.yaml"/>
+    <arg name="bridge_param_file_name" default="$(arg package_param_path)/bridge.yaml"/>
+
+    <arg name="robot_cog_height" default="0.0335"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_frame_broadcaster" args="0 0 0 0 0 0 1 world map" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="robot_frame_broadcaster" args="0 0 $(arg robot_cog_height) 0 0 0 1 base_link robot_frame" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_frame_broadcaster" args="0 0 0 0 0 0 1 robot_frame imu_frame" />
+
+    <node name="simulator" pkg="simulator" type="run.py" output="screen" required="true">
+        <rosparam command="load" file="$(arg topics_param_file_name)" ns="topics"/>
+        <rosparam command="load" file="$(arg simulator_env_param_file_name)" ns="simulator"/>
+        <rosparam command="load" file="$(arg simulator_obs_param_file_name)" ns="simulator/observations"/>
+        <rosparam command="load" file="$(arg bridge_param_file_name)" ns="bridge"/>
+    </node>
+    
+</launch>
