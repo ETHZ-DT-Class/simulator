@@ -1,13 +1,14 @@
-# coding=utf-8
+#!/usr/bin/env python3
+
 from dataclasses import dataclass
 
 import geometry as geo
 import numpy as np
 
-from .dynamics_delay import ApplyDelay
+from duckietown_world.world_duckietown.dynamics_delay import ApplyDelay
 from .generic_kinematics import GenericKinematicsSE2
-from .platform_dynamics import PlatformDynamicsFactory
-from .types import TSE2value
+from duckietown_world.world_duckietown.platform_dynamics import PlatformDynamicsFactory
+from duckietown_world.world_duckietown.types import TSE2value
 
 __all__ = [
     "DynamicModelParameters",

@@ -1,4 +1,5 @@
-# coding=utf-8
+#!/usr/bin/env python3
+
 import geometry as geo
 
 from duckietown_serialization_ds1 import Serializable
