@@ -3,6 +3,7 @@ camera:
   rate: 10
   width: 640
   height: 480
+  compression_format: jpeg
   
 imu:
   enable: true

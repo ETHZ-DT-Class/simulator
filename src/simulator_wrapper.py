@@ -342,7 +342,7 @@ class SimulatorWrapper(Simulator):
         mode: "human", "top_down", "free_cam", "rgb_array"
 
         """
-        assert mode in ["human", "top_down", "free_cam", "rgb_array"]
+        assert mode in ["human", "top_down", "free_camera", "rgb_array"]
 
         if close:
             if self.window:
@@ -356,7 +356,11 @@ class SimulatorWrapper(Simulator):
         do_render_image = True
         # Check if the camera observation rendering can be reused
         if reuse_camera_obs_if_possible:
-            if not top_down and self.last_observation[0] == self.step_count:
+            if (
+                not top_down
+                and not segment
+                and self.last_observation[0] == self.step_count
+            ):
                 last_obs = self.last_observation[1]
                 if last_obs.shape[:2] != (self.window_height, self.window_width):
                     if np.isclose(
@@ -413,14 +417,14 @@ class SimulatorWrapper(Simulator):
 
         x, y, z = self.cur_pos[0], -self.cur_pos[2], self.cur_pos[1]
         info_text_list = [
-                (
-                    f"pose: ({x:.2f}, {y:.2f}), {self.cur_angle:.2f} rad, "
-                    if info_pose
-                    else ""
-                ),
-                f"speed: {self.speed:.2f} m/s, " if info_speed else "",
-                f"steps: {self.step_count}, " if info_steps else "",
-                f"time: {self.timestamp:.2f} s" if info_time_stamp else "",
+            (
+                f"pose: ({x:.2f}, {y:.2f}), {self.cur_angle:.2f} rad, "
+                if info_pose
+                else ""
+            ),
+            f"speed: {self.speed:.2f} m/s, " if info_speed else "",
+            f"steps: {self.step_count}, " if info_steps else "",
+            f"time: {self.timestamp:.2f} s" if info_time_stamp else "",
         ]
 
         if render_on_screen:

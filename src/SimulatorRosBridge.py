@@ -33,17 +33,21 @@ from std_srvs.srv import Trigger, TriggerResponse
 
 from duckietown_msgs.msg import WheelEncoderStamped, WheelsCmdStamped, LanePose
 
+
 def set_duckietown_loggers_to_debug_level():
     import logging
+
     logging.disable(logging.DEBUG)
     import gym_duckietown
+
     logging.disable(logging.NOTSET)
     logger = logging.getLogger("gym-duckietown")
     logger.setLevel(logging.INFO)
     # logger.disabled = True
-    
+
+
 set_duckietown_loggers_to_debug_level()
-        
+
 from gym_duckietown import list_maps2
 
 from gym_duckietown.check_hw import get_graphics_information
@@ -52,7 +56,12 @@ import geometry
 
 from pyglet.gl import *
 
-from .simulator_wrapper import SimulatorWrapper, MotionModelType, LanePosition, MAX_WHEEL_ANG_VEL
+from .simulator_wrapper import (
+    SimulatorWrapper,
+    MotionModelType,
+    LanePosition,
+    MAX_WHEEL_ANG_VEL,
+)
 
 if ON_JETSON:
     import pyglet.window
@@ -375,9 +384,7 @@ class SimulatorRosBridge:
             f"External displaying of the simulation"
             + (
                 f" with mode {logger.bold_green_on_black(self.display_options.mode)} at {self.display_options.rate} Hz"
-                if (
-                    self.display_options.topic_enable
-                )
+                if (self.display_options.topic_enable)
                 else ""
             )
             + " is: "
@@ -396,10 +403,13 @@ class SimulatorRosBridge:
             f" Publish a message to the topic {logger.bold_green_on_black(self.name_sub_wheel_cmd_topic)}"
             f" to control your duckiebot {logger.bold(self.duckiebot_name)}.\n"
         )
-        
+
         post_startup_log_warning_tag = "<warning>"
-        if len(post_startup_log_warning_tag)>0:
-            if self.post_startup_log_text[:len(post_startup_log_warning_tag)] == post_startup_log_warning_tag:
+        if len(post_startup_log_warning_tag) > 0:
+            if (
+                self.post_startup_log_text[: len(post_startup_log_warning_tag)]
+                == post_startup_log_warning_tag
+            ):
                 logger.warning_whole(
                     f"{self.post_startup_log_text[len(post_startup_log_warning_tag):]}"
                 )
@@ -489,13 +499,13 @@ class SimulatorRosBridge:
         self.duckiebot_color = get_sim_param(
             "/duckiebot_color", "red", expected_type=str
         )
-        init_pose_enable = get_sim_param(
-            "/init_pose/enable", False, expected_type=bool
-        )
+        init_pose_enable = get_sim_param("/init_pose/enable", False, expected_type=bool)
         if init_pose_enable:
             init_pose_x = get_sim_param("/init_pose/x", 0, expected_type=number_type)
             init_pose_y = get_sim_param("/init_pose/y", 0, expected_type=number_type)
-            init_pose_theta = get_sim_param("/init_pose/theta", 0, expected_type=number_type)
+            init_pose_theta = get_sim_param(
+                "/init_pose/theta", 0, expected_type=number_type
+            )
             self.init_pose = np.array([init_pose_x, init_pose_y, init_pose_theta])
         else:
             self.init_pose = None
@@ -542,7 +552,9 @@ class SimulatorRosBridge:
             "/rendering/frustum_filtering", False, expected_type=bool
         )
         self.frustum_filtering_min_arccos_threshold = get_sim_param(
-            "/rendering/frustum_filtering_min_arccos_threshold", 0, expected_type=number_type
+            "/rendering/frustum_filtering_min_arccos_threshold",
+            0,
+            expected_type=number_type,
         )
         self.depth_filtering_factor = get_sim_param(
             "/rendering/depth_filtering_factor", 5, expected_type=number_type
@@ -562,9 +574,10 @@ class SimulatorRosBridge:
         self.style = get_sim_param(
             "/rendering/texture_style", "photos", expected_type=str
         )
-        screen_enable = get_sim_param(
-            "/display/screen_enable", False, expected_type=bool
-        ) and not ON_JETSON
+        screen_enable = (
+            get_sim_param("/display/screen_enable", False, expected_type=bool)
+            and not ON_JETSON
+        )
         topic_enable = get_sim_param("/display/topic_enable", False, expected_type=bool)
         display_mode = get_sim_param("/display/mode", "human", expected_type=str)
         display_rate = get_sim_param("/display/rate", 10, expected_type=number_type)
@@ -576,6 +589,9 @@ class SimulatorRosBridge:
         )
         display_width = get_sim_param("/display/width", 320, expected_type=int)
         display_height = get_sim_param("/display/height", 240, expected_type=int)
+        compression_format = get_sim_param(
+            "/display/compression_format", "jpeg", expected_type=str
+        )
         display_info_pose = get_sim_param(
             "/display/show/pose", False, expected_type=bool
         )
@@ -594,6 +610,7 @@ class SimulatorRosBridge:
             mode=display_mode,
             width=display_width,
             height=display_height,
+            compression_format=compression_format,
             rate=display_rate,
             segmentation=display_enable_segmentation,
             info_pose=display_info_pose,
@@ -614,6 +631,9 @@ class SimulatorRosBridge:
         )
         self.camera_obs_height = get_sim_obs_param(
             "/camera/height", 480, expected_type=int
+        )
+        self.camera_obs_compression_format = get_sim_obs_param(
+            "/camera/compression_format", "jpeg", expected_type=str
         )
         self.imu_obs_enable = get_sim_obs_param("/imu/enable", True, expected_type=bool)
         self.imu_obs_rate = get_sim_obs_param(
@@ -650,7 +670,7 @@ class SimulatorRosBridge:
         self.wheel_encoder_left_noise, self.wheel_encoder_right_noise = (
             self.get_wheel_encoders_noise_params()
         )
-        
+
         # bridge params
         ns_bridge_params = "bridge"
         get_bridge_param = get_param_fn(ns_bridge_params)
@@ -1065,7 +1085,13 @@ class SimulatorRosBridge:
                     )
                 )
 
-            accepted_styles = ["photos", "photos-segmentation", "segmentation", "smooth", "synthetic"]
+            accepted_styles = [
+                "photos",
+                "photos-segmentation",
+                "segmentation",
+                "smooth",
+                "synthetic",
+            ]
             if not (self.style in accepted_styles):
                 param_name = "Rendering style"
                 list_error_param_names.append(param_name)
@@ -1091,6 +1117,25 @@ class SimulatorRosBridge:
                     )
                 )
 
+            accepted_camera_obs_compression_formats = ["jpeg", "png"]
+            if not (
+                self.camera_obs_compression_format
+                in accepted_camera_obs_compression_formats
+            ):
+                param_name = "Camera compression format"
+                list_error_param_names.append(param_name)
+                list_error_msgs.append(
+                    string_param_err_msg.format(
+                        param_name=param_name,
+                        string_value=logger.bold_red_on_black(
+                            self.camera_obs_compression_format
+                        ),
+                        accepted_strings=logger.bold_green_on_black(
+                            accepted_camera_obs_compression_formats
+                        ),
+                    )
+                )
+
             if self.display_options.screen_enable or self.display_options.topic_enable:
                 accepted_display_mode = ["human", "top_down", "free_camera"]
                 if not (self.display_options.mode in accepted_display_mode):
@@ -1107,7 +1152,25 @@ class SimulatorRosBridge:
                             ),
                         )
                     )
-            
+                accepted_display_compression_formats = ["jpeg", "png"]
+                if not (
+                    self.display_options.compression_format
+                    in accepted_display_compression_formats
+                ):
+                    param_name = "Display compression format"
+                    list_error_param_names.append(param_name)
+                    list_error_msgs.append(
+                        string_param_err_msg.format(
+                            param_name=param_name,
+                            string_value=logger.bold_red_on_black(
+                                self.display_options.compression_format
+                            ),
+                            accepted_strings=logger.bold_green_on_black(
+                                accepted_display_compression_formats
+                            ),
+                        )
+                    )
+
             if not Path(self.path_folder_mesh_resources).exists():
                 param_name = "Mesh resources folder"
                 # list_error_param_names.append(param_name)
@@ -1117,7 +1180,7 @@ class SimulatorRosBridge:
                 logger.warning(
                     f"{param_name} {self.path_folder_mesh_resources} does not exist."
                 )
-                
+
             if not Path(self.path_duckiebot_mesh_resource).exists():
                 param_name = "Duckiebot mesh resource"
                 # list_error_param_names.append(param_name)
@@ -1164,7 +1227,9 @@ class SimulatorRosBridge:
         self.duckiebot_marker.ns = "duckiebot"
         self.duckiebot_marker.type = self.duckiebot_marker.MESH_RESOURCE
         self.duckiebot_marker.action = self.duckiebot_marker.ADD
-        self.duckiebot_marker.mesh_resource = f"file://{self.path_duckiebot_mesh_resource}"
+        self.duckiebot_marker.mesh_resource = (
+            f"file://{self.path_duckiebot_mesh_resource}"
+        )
         self.duckiebot_marker.mesh_use_embedded_materials = True
         z_offset_mesh = 0.0335  # offset such that the wheels are on the ground
         self.duckiebot_marker.pose.position = Point(0, 0, z_offset_mesh)
@@ -1334,7 +1399,12 @@ class SimulatorRosBridge:
                 self.display_options.topic_enable
                 and self.pub_simulation_external_window is not None
             ):
-                image_msg = image_msg_from_cv_image(img_simulation_external_window)
+
+                image_msg = image_msg_from_cv_image(
+                    img_simulation_external_window,
+                    self.env.timestamp,
+                    self.display_options.compression_format,
+                )
                 self.pub_simulation_external_window.publish(image_msg)
 
     def test_step(self, event=None) -> None:
@@ -1504,25 +1574,39 @@ class SimulatorRosBridge:
             use_action_key_event = True
 
         if use_action_key_event:
-            
+
             if self.env.is_delay_dynamics:
                 parameters = self.env.state.state.parameters
             else:
                 parameters = self.env.state.parameters
-                
+
             wheel_distance = parameters.wheel_distance
             wheel_radius_left = parameters.wheel_radius_left
             wheel_radius_right = parameters.wheel_radius_right
-                
-            max_lin_vel = min(1, max(-1.0, MAX_WHEEL_ANG_VEL * (wheel_radius_right + wheel_radius_left) / 2))
-            max_ang_vel = min(6, max(-6, MAX_WHEEL_ANG_VEL * (wheel_radius_right + wheel_radius_left) / wheel_distance))
-                
+
+            max_lin_vel = min(
+                1,
+                max(
+                    -1.0,
+                    MAX_WHEEL_ANG_VEL * (wheel_radius_right + wheel_radius_left) / 2,
+                ),
+            )
+            max_ang_vel = min(
+                6,
+                max(
+                    -6,
+                    MAX_WHEEL_ANG_VEL
+                    * (wheel_radius_right + wheel_radius_left)
+                    / wheel_distance,
+                ),
+            )
+
             v1 = action_key_event[0] * max_lin_vel
             v2 = action_key_event[1] * max_ang_vel
 
             omega_r = (v1 + 0.5 * v2 * wheel_distance) / wheel_radius_right
             omega_l = (v1 - 0.5 * v2 * wheel_distance) / wheel_radius_left
-            
+
             # conversion from motor rotation rate to duty cycle
             u_r = omega_r / MAX_WHEEL_ANG_VEL
             u_l = omega_l / MAX_WHEEL_ANG_VEL
@@ -1603,7 +1687,9 @@ class SimulatorRosBridge:
         gt_lane_pose_obs = observations.GroundTruthLanePose
 
         if self.pub_camera and camera_obs:
-            image_msg = image_msg_from_obs(camera_obs)
+            image_msg = image_msg_from_obs(
+                camera_obs, self.camera_obs_compression_format
+            )
             self.pub_camera.publish(image_msg)
 
         if self.pub_imu and imu_obs:

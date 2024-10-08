@@ -37,7 +37,7 @@ update: # choose your preferred update method and specify its value
 
 rendering:
   frustum_filtering: true # activate frustum culling
-  frustum_filtering_min_arccos_threshold: 0.3 # min arccos threhsold for the frustum filtering
+  frustum_filtering_min_arccos_threshold: 0.21 # min arccos threhsold for the frustum filtering
   depth_filtering_factor: 5.0 # filter objects far away from the agent (depth > depth_filtering_factor * tile_size)
   depth_texture_resize_factor: 3.0 # resize the texture for objects far away from the agent (depth > depth_filtering_factor * tile_size)
   distant_texture_resize_factor: 0.25 # texture resize factor (multiple of 2 or divisor of 1/2)
@@ -57,6 +57,7 @@ display: # external displaying of the simulation
   mode: human # [human | top_down | free_camera]
   width: 640 # screen width
   height: 480 # screen height
+  compression_format: jpeg # [jpeg | png]
   rate: 10 # update rate
   reuse_camera_obs_if_possible: true # reuse the camera observation if available and same scale, and mode is not top_down
   enable_segmentation: false # render as segmented image
