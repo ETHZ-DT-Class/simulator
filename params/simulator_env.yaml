@@ -32,8 +32,8 @@ motion_model:
 
 update: # choose your preferred update method and specify its value
   use: frame_rate # [frame_rate | delta_time_step] - update the physics using the specified frame rate or delta time step
-  frame_rate: 30 # inner frame rate of the physics update in Hz, i.e. sim delta time step is 1/frame_rate seconds
-  delta_time_step: 0.03333333 # inner delta time step of the physics update in seconds, i.e. frame rate is 1/delta_time_step Hz
+  frame_rate: 20 # inner frame rate of the physics update in Hz, i.e. sim delta time step is 1/frame_rate seconds
+  delta_time_step: 0.05 # inner delta time step of the physics update in seconds, i.e. frame rate is 1/delta_time_step Hz
 
 rendering:
   frustum_filtering: true # activate frustum culling
