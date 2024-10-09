@@ -17,6 +17,7 @@ class DisplayOptions:
     mode: str
     width: int
     height: int
+    compression_format: str
     rate: float
     segmentation: bool
     info_pose: bool

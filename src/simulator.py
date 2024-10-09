@@ -32,16 +32,12 @@ from numpy.random.mtrand import RandomState
 from pyglet import gl, image, window
 
 from duckietown_world import (
-    get_DB18_nominal,
-    get_DB18_uncalibrated,
     get_texture_file,
     MapFormat1,
     MapFormat1Constants,
     MapFormat1Constants as MF1C,
     MapFormat1Object,
     SE2Transform,
-    DynamicModelParameters,
-    DynamicModel,
 )
 from duckietown_world.world_duckietown.dynamics_delay import DelayedDynamics
 from duckietown_world.gltf.export import get_duckiebot_color_from_colorname
@@ -59,7 +55,7 @@ from gym_duckietown.collision import (
 )
 from gym_duckietown.distortion import Distortion
 from gym_duckietown.exceptions import InvalidMapException, NotInLane
-from gym_duckietown.graphics import (
+from .graphics import (
     photos_segmented_path,
     bezier_closest,
     bezier_draw,
@@ -82,6 +78,12 @@ from gym_duckietown.objmesh import get_mesh, MatInfo, ObjMesh
 from gym_duckietown.randomization import Randomizer
 from gym_duckietown.utils import get_subdir_path
 
+from .pwm_dynamics import (
+    get_DB18_nominal,
+    get_DB18_uncalibrated,
+    DynamicModelParameters,
+    DynamicModel,
+)
 from . import logger
 
 DIM = 0.5
@@ -89,7 +91,7 @@ DIM = 0.5
 MAX_COMMAND = 1
 
 MAX_WHEEL_ANG_VEL = 20
-        
+
 
 TileKind = NewType("TileKind", str)
 
@@ -330,7 +332,7 @@ class Simulator(gym.Env):
         self.motion_model_wheel_radius_left = motion_model_wheel_radius_left
         self.motion_model_wheel_radius_right = motion_model_wheel_radius_right
         self.motion_model_encoder_resolution_rad = motion_model_encoder_resolution_rad
-        
+
         self.init_pose = init_pose
 
         # debug
@@ -404,7 +406,9 @@ class Simulator(gym.Env):
         self.reward_range = (-1000, 1000)
 
         self.frustum_filtering = frustum_filtering
-        self.frustum_filtering_min_arccos_threshold = frustum_filtering_min_arccos_threshold
+        self.frustum_filtering_min_arccos_threshold = (
+            frustum_filtering_min_arccos_threshold
+        )
         self.depth_filtering_factor = depth_filtering_factor
         self.depth_texture_resize_factor = depth_texture_resize_factor
         self.distant_texture_resize_factor = distant_texture_resize_factor
@@ -668,15 +672,19 @@ class Simulator(gym.Env):
         # Note: we explicitly sample white and grey/black because
         # these colors are easily confused for road and lane markings
         if self.domain_rand:
-            horz_mode = self.randomization_settings["horz_mode"]
-            if horz_mode == 0:
-                self.horizon_color = self._perturb(self.color_sky)
-            elif horz_mode == 1:
-                self.horizon_color = self._perturb(WALL_COLOR)
-            elif horz_mode == 2:
-                self.horizon_color = self._perturb([0.15, 0.15, 0.15], 0.4)
-            elif horz_mode == 3:
-                self.horizon_color = self._perturb([0.9, 0.9, 0.9], 0.4)
+            use_normal_horizon = True
+            if use_normal_horizon:
+                self.horizon_color = self.color_sky
+            else:
+                horz_mode = self.randomization_settings["horz_mode"]
+                if horz_mode == 0:
+                    self.horizon_color = self._perturb(self.color_sky)
+                elif horz_mode == 1:
+                    self.horizon_color = self._perturb(WALL_COLOR)
+                elif horz_mode == 2:
+                    self.horizon_color = self._perturb([0.15, 0.15, 0.15], 0.4)
+                elif horz_mode == 3:
+                    self.horizon_color = self._perturb([0.9, 0.9, 0.9], 0.4)
         else:
             self.horizon_color = self.color_sky
 
@@ -763,7 +771,7 @@ class Simulator(gym.Env):
 
             kind = tile["kind"]
             if self.style == "photos-segmentation":
-                fn = [f"{photos_segmented_path}/{kind}.jpg"][0]
+                fn = [f"{photos_segmented_path}/{kind}.png"][0]
             else:
                 fn = get_texture_file(f"tiles-processed/{self.style}/{kind}/texture")[0]
             tile["texture"] = {}
@@ -793,7 +801,7 @@ class Simulator(gym.Env):
                 obj.visible = self.np_random.integers(0, 2) == 0
             else:
                 obj.visible = True
-                
+
         self.tile_texture_group = {}
         self.texture_dict = {}
         self.texture_to_kind_dict = {}
@@ -801,27 +809,28 @@ class Simulator(gym.Env):
             # Get the tile type and angle
             tile = self._get_tile(i, j)
             kind = tile["kind"]
-            
+
             textures = tile["texture"]
             texture_name = textures["original"].tex_name
-            
+
             if texture_name not in self.texture_dict:
                 self.texture_dict[texture_name] = textures
-                
+
             if texture_name not in self.texture_to_kind_dict:
                 self.texture_to_kind_dict[texture_name] = kind
-                
+
             if texture_name in self.tile_texture_group:
                 self.tile_texture_group[texture_name].append((i, j))
             else:
                 self.tile_texture_group[texture_name] = [(i, j)]
-                
-            
+
         # If the params specifies an initial pose
         if self.init_pose is not None:
             self.cur_pos = np.array([self.init_pose[0], 0, -self.init_pose[1]])
             self.cur_angle = self.init_pose[2]
-            logger.info(f"Using initial pose: position: {[self.cur_pos[0], -self.cur_pos[2]]}, angle: {self.cur_angle}")
+            logger.info(
+                f"Using initial pose: position: {[self.cur_pos[0], -self.cur_pos[2]]}, angle: {self.cur_angle}"
+            )
         else:
             # If the map specifies a starting tile
             if self.user_tile_start:
@@ -847,7 +856,7 @@ class Simulator(gym.Env):
 
             # If the map specifies a starting pose
             if self.start_pose is not None:
-                
+
                 i, j = tile["coords"]
                 x = i * self.road_tile_size + self.start_pose[0][0]
                 z = j * self.road_tile_size + self.start_pose[0][2]
@@ -910,12 +919,14 @@ class Simulator(gym.Env):
                     )
                     break
                 else:
-                    
+
                     propose_pos = np.array([1, 0, 1])
                     propose_angle = 1
-                    logger.warning(f"Could not find a valid starting pose after {MAX_SPAWN_ATTEMPTS} attempts,"
-                                f" using hardcoded pose: position {[propose_pos[0], -propose_pos[2]]}, angle {propose_angle}"
-                                " (relative to tile start)")
+                    logger.warning(
+                        f"Could not find a valid starting pose after {MAX_SPAWN_ATTEMPTS} attempts,"
+                        f" using hardcoded pose: position {[propose_pos[0], -propose_pos[2]]}, angle {propose_angle}"
+                        " (relative to tile start)"
+                    )
 
                     # raise Exceptipathlib
 
@@ -947,51 +958,65 @@ class Simulator(gym.Env):
         else:
             raise ValueError(f"Unexpected dynamic model {type(self.state)}")
 
-        parameters.wheel_distance = (
-            self.motion_model_wheel_distance
+        parameters.wheel_distance = self.motion_model_wheel_distance
+        parameters.wheel_radius_right = self.motion_model_wheel_radius_right
+        parameters.wheel_radius_left = self.motion_model_wheel_radius_left
+        parameters.encoder_resolution_rad = self.motion_model_encoder_resolution_rad
+
+        max_lin_vel = (
+            MAX_WHEEL_ANG_VEL
+            * (parameters.wheel_radius_right + parameters.wheel_radius_left)
+            / 2
         )
-        parameters.wheel_radius_right = (
-            self.motion_model_wheel_radius_right
+        max_ang_vel = (
+            MAX_WHEEL_ANG_VEL
+            * (parameters.wheel_radius_right + parameters.wheel_radius_left)
+            / parameters.wheel_distance
         )
-        parameters.wheel_radius_left = (
-            self.motion_model_wheel_radius_left
-        )
-        parameters.encoder_resolution_rad = (
-            self.motion_model_encoder_resolution_rad
-        )
-        
-        max_lin_vel = MAX_WHEEL_ANG_VEL * (parameters.wheel_radius_right + parameters.wheel_radius_left) / 2
-        max_ang_vel = MAX_WHEEL_ANG_VEL * (parameters.wheel_radius_right + parameters.wheel_radius_left) / parameters.wheel_distance
-        
+
         # dynamics formula:
         # current_lin_acc = (u_alpha_r_coeff * wheel_radius_r * command_r + u_alpha_l_coeff * wheel_radius_l * command_l) - u_coeff * prev_lin_vel
         # current_ang_acc = (w_alpha_r_coeff * wheel_radius_r * command_r - w_alpha_l_coeff * wheel_radius_l * command_l) - w_coeff * prev_ang_vel
-        
+
         # these coefficients influence the dynamic response of the robot:
         # the higher the coefficients, the more aggressive the response to commands
         u_alpha_r_coeff = 45
         u_alpha_l_coeff = 45
         w_alpha_r_coeff = u_alpha_r_coeff / parameters.wheel_distance
         w_alpha_l_coeff = u_alpha_l_coeff / parameters.wheel_distance
-        
+
         # these coefficients influence the steady-state velocity of the robot:
         # the higher the coefficients, the lower the steady-state velocity
         # Try to use the wheel parameters to calculate the coefficients!
-        u_coeff = MAX_COMMAND * (u_alpha_r_coeff * parameters.wheel_radius_right + u_alpha_l_coeff * parameters.wheel_radius_left) / max_lin_vel
-        w_coeff = MAX_COMMAND * (w_alpha_r_coeff * parameters.wheel_radius_right + w_alpha_l_coeff * parameters.wheel_radius_left) / max_ang_vel
-        
+        u_coeff = (
+            MAX_COMMAND
+            * (
+                u_alpha_r_coeff * parameters.wheel_radius_right
+                + u_alpha_l_coeff * parameters.wheel_radius_left
+            )
+            / max_lin_vel
+        )
+        w_coeff = (
+            MAX_COMMAND
+            * (
+                w_alpha_r_coeff * parameters.wheel_radius_right
+                + w_alpha_l_coeff * parameters.wheel_radius_left
+            )
+            / max_ang_vel
+        )
+
         parameters.u_alpha_r = u_alpha_r_coeff * parameters.wheel_radius_right
         parameters.u_alpha_l = u_alpha_l_coeff * parameters.wheel_radius_left
         parameters.w_alpha_r = w_alpha_r_coeff * parameters.wheel_radius_right
         parameters.w_alpha_l = w_alpha_l_coeff * parameters.wheel_radius_left
-        
+
         parameters.u1 = u_coeff
         parameters.u2 = 0
         parameters.u3 = 0
         parameters.w1 = w_coeff
         parameters.w2 = 0
         parameters.w3 = 0
-        
+
         if self.is_delay_dynamics:
             self.state.state.parameters = parameters
         else:
@@ -1000,7 +1025,7 @@ class Simulator(gym.Env):
         logger.debug(f"Starting at {self.cur_pos} {self.cur_angle}")
 
         # Generate the first camera image
-        obs = self.render_obs(segment=segment)
+        obs = self.render_obs()
 
         # Return first observation
         return obs
@@ -1075,10 +1100,11 @@ class Simulator(gym.Env):
 
             self.road_tile_size = map_data["tile_size"]
             if self.road_tile_size != 0.585:
-                raise InvalidMapException(
-                    "Only tile_size=0.585 is supported in the map data!"
-                    f" Do you really need to use a different"
-                    f" tile_size={self.road_tile_size}? Ask Nicola."
+                logger.warning(
+                    f"The frustum culling (filtering) to make the simulation"
+                    f" render faster is optimized for tile_size=0.585."
+                    f" You are using tile_size={self.road_tile_size}."
+                    f" Take care of changing the frustum culling (filtering) parameters."
                 )
             assert self.road_tile_size > 0
             self._init_vlists()
@@ -2252,15 +2278,15 @@ class Simulator(gym.Env):
             self.init_total_render_time = [0, 0]
 
         start_rend_tiles_timer = time.perf_counter()
-        
+
         if not self.domain_rand:
-            gl.glColor4f(*[1,1,1,1])             
-            
+            gl.glColor4f(*[1, 1, 1, 1])
+
         for texture_name, tile_coords in self.tile_texture_group.items():
-            
+
             # Bind the appropriate texture
             kind = self.texture_to_kind_dict[texture_name]
-            if (self.force_texture_resize_floor and kind == "floor"):
+            if self.force_texture_resize_floor and kind == "floor":
                 texture = self.texture_dict[texture_name]["resized"]
             else:
                 texture = self.texture_dict[texture_name]["original"]
@@ -2274,23 +2300,33 @@ class Simulator(gym.Env):
                     continue
 
                 tile_xyz = np.array(
-                    [(i + 0.5) * self.road_tile_size, 0, (j + 0.5) * self.road_tile_size]
+                    [
+                        (i + 0.5) * self.road_tile_size,
+                        0,
+                        (j + 0.5) * self.road_tile_size,
+                    ]
                 )
                 if self.frustum_filtering:
                     # filter out tiles that are outside camera frustum (use dot product of vector from camera to tile and camera direction)
-                    if np.linalg.norm(tile_xyz-pos) > self.road_tile_size: # avoid filtering out tiles that are too close to the camera
-                        tile_vec = tile_xyz - (pos - dir_vec * 0.1 * self.road_tile_size)
+                    if (
+                        np.linalg.norm(tile_xyz - pos) > self.road_tile_size
+                    ):  # avoid filtering out tiles that are too close to the camera
+                        tile_vec = tile_xyz - (
+                            pos - dir_vec * 0.1 * self.road_tile_size
+                        )
                         if (
-                            np.dot(
-                                dir_vec, tile_vec
-                            ) / (np.linalg.norm(dir_vec) * np.linalg.norm(tile_vec))
+                            np.dot(dir_vec, tile_vec)
+                            / (np.linalg.norm(dir_vec) * np.linalg.norm(tile_vec))
                             < self.frustum_filtering_min_arccos_threshold
                         ):
                             continue
 
                 if self.depth_filtering_factor >= 0:
                     # filter out tiles that are too far away from camera
-                    if squared_2d_dist(tile_xyz, pos) > self.squared_depth_filtering_thresh:
+                    if (
+                        squared_2d_dist(tile_xyz, pos)
+                        > self.squared_depth_filtering_thresh
+                    ):
                         continue
 
                 # kind = tile["kind"]
@@ -2304,7 +2340,6 @@ class Simulator(gym.Env):
                 #     texture = self.texture_dict[texture_name]["resized"]
                 # else:
                 #     texture = self.texture_dict[texture_name]["original"]
-                
 
                 # # logger.info('drawing', tile_color=color)
                 # TS = self.road_tile_size
@@ -2320,6 +2355,7 @@ class Simulator(gym.Env):
                 gl.glTranslatef((i + 0.5) * TS, 0, (j + 0.5) * TS)
                 gl.glRotatef(angle * 90 + 180, 0, 1, 0)
 
+                # texture.bind(segment)
                 # gl.glEnable(gl.GL_BLEND)
                 # gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
@@ -2327,7 +2363,6 @@ class Simulator(gym.Env):
                 # gl.glDisable(gl.GL_BLEND)
 
                 gl.glPopMatrix()
-
 
         end_rend_tiles_timer = time.perf_counter()
         self.tiles_total_render_time[0] += end_rend_tiles_timer - start_rend_tiles_timer
@@ -2344,16 +2379,17 @@ class Simulator(gym.Env):
         for obj in self.objects:
             if self.frustum_filtering:
                 # filter out objects that are outside the camera frustum (use dot product of vector from camera to object and camera direction)
-                if np.linalg.norm(obj.pos-pos) > self.road_tile_size: # avoid filtering out objects that are too close to the camera
+                if (
+                    np.linalg.norm(obj.pos - pos) > self.road_tile_size
+                ):  # avoid filtering out objects that are too close to the camera
                     obj_vec = obj.pos - (pos - dir_vec * 0.1 * self.road_tile_size)
                     if (
-                        np.dot(
-                            dir_vec, obj_vec
-                        ) / (np.linalg.norm(dir_vec) * np.linalg.norm(obj_vec))
+                        np.dot(dir_vec, obj_vec)
+                        / (np.linalg.norm(dir_vec) * np.linalg.norm(obj_vec))
                         < self.frustum_filtering_min_arccos_threshold
                     ):
                         continue
-                    
+
             if self.depth_filtering_factor >= 0:
                 # filter out objects that are too far away from camera
                 if squared_2d_dist(obj.pos, pos) > self.squared_depth_filtering_thresh:
@@ -2546,13 +2582,15 @@ class Simulator(gym.Env):
 
     def get_next_map_name(self) -> str:
         return self.next_map_name
-    
+
     @lru_cache(maxsize=10)
-    def get_kinematics_params_from_dynamics_params(self, dynamics_params: DynamicModelParameters, delta_time: float) -> DynamicModelParameters:
+    def get_kinematics_params_from_dynamics_params(
+        self, dynamics_params: DynamicModelParameters, delta_time: float
+    ) -> DynamicModelParameters:
         """
         Mimic the kinematic parameters from the dynamic parameters
         """
-        
+
         # Compute dynamics parameters that mimic a kinematic model,
         # i.e. a immediate reaction in changing velocities (reach steady-state velocity in one time step),
         # paying attention to achieve the same target speed as with the dynamics model
@@ -2585,7 +2623,7 @@ class Simulator(gym.Env):
         kinematics_params.wheel_distance = dynamics_params.wheel_distance
         kinematics_params.wheel_radius_left = dynamics_params.wheel_radius_left
         kinematics_params.wheel_radius_right = dynamics_params.wheel_radius_right
-            
+
         return kinematics_params
 
     def _update_pos(self, action, delta_time: Optional[float] = None):
@@ -2601,13 +2639,15 @@ class Simulator(gym.Env):
         if self.motion_model == MotionModelType.DYNAMICS:
             ...
         elif self.motion_model == MotionModelType.KINEMATICS:
-            
+
             if self.is_delay_dynamics:
                 dynamics_params = copy.deepcopy(self.state.state.parameters)
             else:
                 dynamics_params = copy.deepcopy(self.state.parameters)
-            
-            kinematics_params = self.get_kinematics_params_from_dynamics_params(dynamics_params, delta_time)
+
+            kinematics_params = self.get_kinematics_params_from_dynamics_params(
+                dynamics_params, delta_time
+            )
 
             if self.is_delay_dynamics:
                 self.state.state.parameters = kinematics_params

@@ -33,10 +33,11 @@ def ros_header_from_obs(obs_header: HeaderObservation) -> Header:
     )
 
 
-def image_msg_from_obs(camera_obs: CameraObservation) -> CompressedImage:
+def image_msg_from_obs(
+    camera_obs: CameraObservation, compression_format: str = "png"
+) -> CompressedImage:
     image_msg = CompressedImage()
     # use numpy and cv2
-    compression_format = "jpeg"
     image_msg.header = ros_header_from_obs(camera_obs.header)
     image_msg.format = compression_format
     image_msg.data = np.array(
@@ -46,10 +47,12 @@ def image_msg_from_obs(camera_obs: CameraObservation) -> CompressedImage:
     return image_msg
 
 
-def image_msg_from_cv_image(cv_image: np.ndarray) -> CompressedImage:
+def image_msg_from_cv_image(
+    cv_image: np.ndarray, stamp: float = 0, compression_format: str = "png"
+) -> CompressedImage:
     image_msg = CompressedImage()
     # use numpy and cv2
-    compression_format = "jpeg"
+    image_msg.header.stamp = rospy.Time(stamp)
     image_msg.format = compression_format
     image_msg.data = np.array(
         cv2.imencode("." + compression_format, cv_image[:, :, ::-1])[1]

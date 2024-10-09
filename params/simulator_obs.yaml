@@ -3,27 +3,28 @@ camera:
   rate: 10
   width: 640
   height: 480
+  compression_format: jpeg
   
 imu:
   enable: true
-  rate: 30
+  rate: 20
 
 wheel_encoders:
   enable: true
-  rate: 25
+  rate: 20
   ticks_per_revolution: 32
 
 gt_pose:
   enable: true
-  rate: 30
+  rate: 20
 
 lane_pose:
   enable: true
-  rate: 30
+  rate: 20
 
 command:
   enable: true
-  rate: 30
+  rate: 20
 
 
 noise: # add noise n_t to the data, obtained from white noise wn and bias b: n_t = b_mu,t + N(0, wn_sigma), with b_mu,t = b_mu,t-1 + N(0, b_sigma)
