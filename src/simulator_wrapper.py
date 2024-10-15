@@ -80,6 +80,7 @@ class SimulatorWrapper(Simulator):
         check_collisions_enable: bool,
         compute_reward_enable: bool,
         seed: int,
+        imu_is_rotated: bool,
         **kwargs,
     ):
 
@@ -147,6 +148,8 @@ class SimulatorWrapper(Simulator):
         self.imu_noise = imu_noise
         self.wheel_encoder_left_noise = wheel_encoder_left_noise
         self.wheel_encoder_right_noise = wheel_encoder_right_noise
+        
+        self.imu_is_rotated = imu_is_rotated
 
         self.seq_camera_obs = 0
         self.seq_imu_obs = 0
@@ -656,10 +659,15 @@ class SimulatorWrapper(Simulator):
 
         # linear acceleration
         longit_prev, lateral_prev = self.prev_linear_vel
-        lin_acc = (
-            np.array([longit - longit_prev, lateral - lateral_prev, 0])
-            / self.last_used_delta_time
-        )
+        if not self.imu_is_rotated:
+            # positive x is forward, positive y is left
+            x_acc = (longit - longit_prev) / self.last_used_delta_time
+            y_acc = (lateral - lateral_prev) / self.last_used_delta_time
+        else:
+            # positive x is left, positive y is backward
+            x_acc = (lateral - lateral_prev) / self.last_used_delta_time
+            y_acc = - (longit - longit_prev) / self.last_used_delta_time
+        lin_acc = np.array([x_acc, y_acc, 9.80665])
         lin_acc_x_noise = self.imu_noise.lin_acc.sample()
         # To use one noise object instance, call it again but disable the bias update
         lin_acc_y_noise = self.imu_noise.lin_acc.sample(update_bias=False)

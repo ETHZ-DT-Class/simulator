@@ -96,6 +96,7 @@ camera:
 imu:
   enable: bool
   rate: [int, float]
+  is_rotated: bool # if true, the imu data will be rotated 90 degrees counter-clockwise, as the imu on the real Duckiebot
 
 wheel_encoders:
   enable: bool

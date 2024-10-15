@@ -238,6 +238,7 @@ class SimulatorRosBridge:
             motion_model_wheel_distance=self.motion_model_wheel_distance,
             motion_model_wheel_radius_left=self.motion_model_wheel_radius_left,
             motion_model_wheel_radius_right=self.motion_model_wheel_radius_right,
+            imu_is_rotated=self.imu_is_rotated,
         )
 
         self.rospy_rate = rospy.Rate(self.realtime_factor * self.simulation_frame_rate)
@@ -638,6 +639,9 @@ class SimulatorRosBridge:
         self.imu_obs_enable = get_sim_obs_param("/imu/enable", True, expected_type=bool)
         self.imu_obs_rate = get_sim_obs_param(
             "/imu/rate", 100, expected_type=number_type
+        )
+        self.imu_is_rotated = get_sim_obs_param(
+            "/imu/is_rotated", False, expected_type=bool
         )
         self.wheel_encoders_obs_enable = get_sim_obs_param(
             "/wheel_encoders/enable", True, expected_type=bool
