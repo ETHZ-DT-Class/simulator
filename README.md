@@ -5,7 +5,7 @@ For the development of the exercises, you **don't** need to read this README. Th
 
 ## Easy start
 ### Clone the repository
-If the simulator repository is not already present at [user_code_mount_dir/simulator/](../user_code_mount_dir/simulator/), clone the repository.
+If the simulator repository is not already present at [user_code_mount_dir/simulator/](../), clone the repository.
 
 ```
 git clone https://github.com/ETHZ-DT-Class/simulator.git /home/duckie/vnc-docker/user_code_mount_dir/simulator
@@ -14,7 +14,7 @@ git clone https://github.com/ETHZ-DT-Class/simulator.git /home/duckie/vnc-docker
 
 ***IMPORTANT***: in theory, you should NEVER run the simulator using the simple `roslaunch simulator simulator.launch` command while developing the exercises, because it will launch the simulator loading the default config parameters. When an exercise requires to run the simulator, the exercise will provide a specific way to launch the simulator such that the correct exercise-specific or task-specific config parameters are loaded. Check the README of the exercise for more information.
 
-The simulator is a standard ROS package: inside the container, build the package running `catkin build` inside the folder `/code/catkin_ws/` and source the ROS workspace with `source /code/catkin_ws/devel/setup.bash`. Then, run the simulator node with `roslaunch simulator simulator.launch`, which will run it loading the default config parameters. If you want to change the default config parameters, modify the files in the [assets/simulator/simulator/params](../user_code_mount_dir/simulator/params) folder. More information about changing the default parameters can be found in the [Parameters](#parameters) section.
+The simulator is a standard ROS package: inside the container, build the package running `catkin build` inside the folder `/code/catkin_ws/` and source the ROS workspace with `source /code/catkin_ws/devel/setup.bash`. Then, run the simulator node with `roslaunch simulator simulator.launch`, which will run it loading the default config parameters. If you want to change the default config parameters, modify the files in the [assets/simulator/simulator/params](./params) folder. More information about changing the default parameters can be found in the [Parameters](#parameters) section.
 
 You can visualize the simulation with RQT and/or Rviz.
 
@@ -43,17 +43,17 @@ The simulation frame rate update step is independent on the real time frequency 
 
 ### Parameters
 
-Default parameters are provided in the [assets/simulator/simulator/params](../user_code_mount_dir/simulator/params) folder.
+Default parameters are provided in the [assets/simulator/simulator/params](./params) folder.
 
 ***IMPORTANT***: you don't have to modify these default parameters while developing the exercises. When an exercise requires to run the simulator, the exercise will provide a specific way to launch the simulator such that the correct exercise-specific or task-specific config parameters are loaded. Check the README of the exercise for more information.
 
-You can define your own parameter folder and load it by setting in the launch file [assets/simulator/simulator/launch/simulator.launch](../user_code_mount_dir/simulator/launch/simulator.launch) the parameter `package_param_path` to the path of your parameter folder (`roslaunch simulator simulator.launch package_param_path:=<YOUR_FOLDER_PATH>`)
+You can define your own parameter folder and load it by setting in the launch file [assets/simulator/simulator/launch/simulator.launch](./launch/simulator.launch) the parameter `package_param_path` to the path of your parameter folder (`roslaunch simulator simulator.launch package_param_path:=<YOUR_FOLDER_PATH>`)
 
 The simulation parameters are divided into different files:
 
 <details><summary>bridge.yaml</summary>
 
-[bridge.yaml](../user_code_mount_dir/simulator/params/bridge.yaml)
+[bridge.yaml](./params/bridge.yaml)
 
 ```
 realtime_factor: [int, float] # speed up the simulation by the factor (2.0 sim is updated 2x faster than real time, but 2x computational load)
@@ -74,7 +74,7 @@ post_startup_log_text: str # print a special string of your choice, can be usefu
 
 <details><summary>logger.yaml</summary>
 
-[logger.yaml](../user_code_mount_dir/simulator/params/logger.yaml)
+[logger.yaml](./params/logger.yaml)
 
 ```
 level: str # [debug_timing | debug | info | warning | error | critical]
@@ -83,7 +83,7 @@ level: str # [debug_timing | debug | info | warning | error | critical]
 
 <details><summary>simulator_obs.yaml</summary>
 
-[simulator_obs.yaml](../user_code_mount_dir/simulator/params/simulator_obs.yaml)
+[simulator_obs.yaml](./params/simulator_obs.yaml)
 
 ```
 camera:
@@ -162,7 +162,7 @@ noise: # add noise n_t to the data, obtained from white noise wn and bias b: n_t
 
 <details><summary>simulator_env.yaml</summary>
 
-[simulator_env.yaml](../user_code_mount_dir/simulator/params/simulator_env.yaml)
+[simulator_env.yaml](./params/simulator_env.yaml)
 
 ```
 seed: int # seed for random number generation; 0 means random seed
@@ -239,7 +239,7 @@ display: # external displaying of the simulation
 
 <details><summary>topics.yaml</summary>
 
-[topics.yaml](../user_code_mount_dir/simulator/params/topics.yaml)
+[topics.yaml](./params/topics.yaml)
 
 ```
 sub: # Subscribed topics
@@ -266,11 +266,11 @@ If you want to use special Python values like `float("inf")`, `float("-inf")`, o
 
 ### Input command
 
-The simulated duckiebot is controlled by commanding the left and right wheels with torques inputs normalized in the range [0, 1]. The ROS bridge is subscribed to [duckietown_msgs/WheelsCmdStamped](https://github.com/duckietown/dt-ros-commons/blob/daffy/packages/duckietown_msgs/msg/WheelsCmdStamped.msg) message via the topic described in [params/topics.yaml](../user_code_mount_dir/simulator/params/topics.yaml). Publish the desired wheel commands to this topic to control the simulated duckiebot.
+The simulated duckiebot is controlled by commanding the left and right wheels with torques inputs normalized in the range [0, 1]. The ROS bridge is subscribed to [duckietown_msgs/WheelsCmdStamped](https://github.com/duckietown/dt-ros-commons/blob/daffy/packages/duckietown_msgs/msg/WheelsCmdStamped.msg) message via the topic described in [params/topics.yaml](./params/topics.yaml). Publish the desired wheel commands to this topic to control the simulated duckiebot.
 
 ### Output sensors
 
-The simulated sensors options are managed in the param files [params/simulator_obs.yaml](../user_code_mount_dir/simulator/params/simulator_obs.yaml) (status, rate, noise) and [params/topics.yaml](../user_code_mount_dir/simulator/params/topics.yaml) (published topic names).
+The simulated sensors options are managed in the param files [params/simulator_obs.yaml](./params/simulator_obs.yaml) (status, rate, noise) and [params/topics.yaml](./params/topics.yaml) (published topic names).
 
 #### Sensors
 You can choose to enable the following sensors (and their update rates) in the simulation environment:
@@ -288,14 +288,14 @@ For the IMU and wheel encoders, you can also add noise $n_t$ to the sensor data,
 
 ### Services
 
-The ROS bridge provides the following (server) services to interact with the simulation environment (for the actual services' names, check/modify [params/topics.yaml](../user_code_mount_dir/simulator/params/topics.yaml)):
-- `reset_sim`: reset the simulation environment (reset independent of the `reset/mode` parameter in [params/bridge.yaml](../user_code_mount_dir/simulator/params/bridge.yaml))
+The ROS bridge provides the following (server) services to interact with the simulation environment (for the actual services' names, check/modify [params/topics.yaml](./params/topics.yaml)):
+- `reset_sim`: reset the simulation environment (reset independent of the `reset/mode` parameter in [params/bridge.yaml](./params/bridge.yaml))
 - `kill_sim`: kill the simulation node
 
 
 ## Reduce computational load of the simulation
 Some tips to reduce the computational load of the simulation:
-- Rendering (in [params/simulator_env.yaml](../user_code_mount_dir/simulator/params/simulator_env.yaml)):
+- Rendering (in [params/simulator_env.yaml](./params/simulator_env.yaml)):
   - Enable frustum filtering (`rendering: frustum_filtering`) and increase the minimum arccos threshold (`rendering: frustum_filtering_min_arccos_threshold`)
   - Decrease the depth filtering factor (`rendering: depth_filtering_factor`)
   - Decrease the depth texture resize factor (`rendering: depth_texture_resize_factor`)
@@ -303,13 +303,13 @@ Some tips to reduce the computational load of the simulation:
   - Enable the forcing of the floor texture resize (`rendering: force_texture_resize_floor`)
   - Enable the skipping of the frame buffer copy (`rendering: skip_frame_buffer_copy`) - more useful when running on CPU than GPU
   - Disable the external displaying of the simulation and/or camera observation (see next points)
-- External displaying of the simulation (in [params/simulator_env.yaml](../user_code_mount_dir/simulator/params/simulator_env.yaml)):
+- External displaying of the simulation (in [params/simulator_env.yaml](./params/simulator_env.yaml)):
   - Reduce the display rate (`display: rate`) - don't worry, the display rate is NOT related to the actual camera observation rate of the camera topic
   - Reduce the display resolution (`display: width`, `display: height`) - don't worry, the display resolution is NOT related to the actual camera observation resolution of the camera topic
   - Enable the reuse of the already computed camera observation (`display: reuse_camera_obs_if_possible`)
   - Disable the display completely (`display: topic_enable`)
-- Camera observation (in [params/simulator_obs.yaml](../user_code_mount_dir/simulator/params/simulator_obs.yaml)):
+- Camera observation (in [params/simulator_obs.yaml](./params/simulator_obs.yaml)):
   - Do not subscribe to the camera topic and do not visualize the camera topic in RQT (if nothing is subscribed to the camera topic, the camera observation is not rendered)
   - Disable the camera observation completely (`camera: enable`)
-- Real time factor (in [param/sbridge.yaml](../user_code_mount_dir/simulator/params/bridge.yaml)):
-If the simulation is still using too much computational resources, you can reduce the real time factor `realtime_factor`. The simulated dynamics and sensors will still run at the same specififed simulated framerate or delta time step (`update: frame_rate` or `update: delta_time_step` in [param/simulator_env.yaml](../user_code_mount_dir/simulator/params/simulator_env.yaml)). This will reduce the computational load of the simulation, but from the external point of view, the simulation will run slower. But don't worry, from the point of view of the simulated robot, nothing changed.
+- Real time factor (in [param/sbridge.yaml](./params/bridge.yaml)):
+If the simulation is still using too much computational resources, you can reduce the real time factor `realtime_factor`. The simulated dynamics and sensors will still run at the same specififed simulated framerate or delta time step (`update: frame_rate` or `update: delta_time_step` in [param/simulator_env.yaml](./params/simulator_env.yaml)). This will reduce the computational load of the simulation, but from the external point of view, the simulation will run slower. But don't worry, from the point of view of the simulated robot, nothing changed.
